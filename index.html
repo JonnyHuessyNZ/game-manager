@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falcons Rugby Manager</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel to translate JSX in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        // --- React Application Code ---
+
+        const { useState, useEffect, useCallback, useMemo, useReducer } = React;
+
+        // --- Icon Components ---
+        const RefreshCwIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+        );
+        
+        const PlayIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+        
+        const PauseIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+        
+        const PlusCircleIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+        
+        const ShirtIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+        );
+        
+        const ArrowRightLeftIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+            </svg>
+        );
+        
+        const TrophyIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+        );
+        
+        const LockIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+        );
+        
+        const UnlockIcon = ({className}) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+            </svg>
+        );
+
+        // --- Utility Functions ---
+        const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        // --- localStorage Helpers ---
+        const getTeamsFromStorage = () => {
+            try {
+                const teams = localStorage.getItem('rugby-teams');
+                return teams ? JSON.parse(teams) : [];
+            } catch (e) {
+                console.error("Could not get teams from storage:", e);
+                return [];
+            }
+        };
+
+        const saveTeamsToStorage = (teams) => {
+            try {
+                localStorage.setItem('rugby-teams', JSON.stringify(teams));
+            } catch (e) {
+                console.error("Could not save teams to storage:", e);
+            }
+        };
+
+        const PLAYERS_ON_FIELD = 6;
+        const GIRLS_ON_FIELD = 2;
+        const BOYS_ON_FIELD = PLAYERS_ON_FIELD - GIRLS_ON_FIELD;
+
+        const initialTeams = getTeamsFromStorage();
+
+        // --- State Management with useReducer ---
+        const initialState = {
+            teams: initialTeams,
+            selectedTeamId: null,
+            roster: [],
+            gameState: 'teamSelection', // 'teamSelection', 'teamCreation', 'setup', 'playing', 'paused', 'halftime', 'finished'
+            subInterval: 180,
+            subTimer: 180,
+            subGroupSize: 4,
+            gameTime: 1800, // 30 minutes
+            gameTimer: 1800,
+            isSubTimerRunning: false,
+            showSubModal: false,
+            substitution: { off: [], on: [] },
+            opponentName: 'Opponent',
+            falconsScore: 0,
+            opponentScore: 0,
+            currentHalf: 1,
+            toastMessage: null,
+        };
+
+        function gameReducer(state, action) {
+            switch (action.type) {
+                case 'CREATE_TEAM': {
+                    const newTeam = { id: Date.now(), name: action.payload, roster: [] };
+                    const newTeams = [...state.teams, newTeam];
+                    saveTeamsToStorage(newTeams);
+                    return { ...state, teams: newTeams };
+                }
+                case 'DELETE_TEAM': {
+                    const newTeams = state.teams.filter(team => team.id !== action.payload);
+                    saveTeamsToStorage(newTeams);
+                    return { ...state, teams: newTeams };
+                }
+                case 'SELECT_TEAM': {
+                    const selectedTeam = state.teams.find(team => team.id === action.payload);
+                    return { ...state, selectedTeamId: action.payload, roster: selectedTeam.roster, gameState: 'setup' };
+                }
+                case 'ADD_PLAYER': {
+                    const newRoster = [...state.roster, action.payload];
+                    const newTeams = state.teams.map(team =>
+                        team.id === state.selectedTeamId ? { ...team, roster: newRoster } : team
+                    );
+                    saveTeamsToStorage(newTeams);
+                    return { ...state, teams: newTeams, roster: newRoster };
+                }
+                case 'UPDATE_ROSTER': {
+                    const newTeams = state.teams.map(team =>
+                        team.id === state.selectedTeamId ? { ...team, roster: action.payload } : team
+                    );
+                    saveTeamsToStorage(newTeams);
+                    return { ...state, teams: newTeams, roster: action.payload };
+                }
+                
+                case 'SET_GAME_STATE':
+                    return { ...state, gameState: action.payload };
+                case 'SET_SUB_INTERVAL':
+                    return { ...state, subInterval: action.payload, subTimer: action.payload };
+                case 'SET_SUB_GROUP_SIZE':
+                    return { ...state, subGroupSize: action.payload };
+                case 'SET_GAME_TIME':
+                    return { ...state, gameTime: action.payload };
+                case 'SET_OPPONENT_NAME':
+                    return { ...state, opponentName: action.payload };
+                case 'TICK': {
+                    let newGameState = state.gameState;
+                    let newIsSubTimerRunning = state.isSubTimerRunning;
+                    let newGameTimer = state.gameTimer;
+                    if (state.gameState === 'playing') {
+                        newGameTimer = state.gameTimer > 0 ? state.gameTimer - 1 : 0;
+                        if (newGameTimer === 0) {
+                            newGameState = state.currentHalf === 1 ? 'halftime' : 'finished';
+                            newIsSubTimerRunning = false;
+                        }
+                    }
+                    return {
+                        ...state,
+                        gameTimer: newGameTimer,
+                        subTimer: state.isSubTimerRunning && state.subTimer > 0 ? state.subTimer - 1 : state.subTimer,
+                        roster: state.gameState === 'playing' ? state.roster.map(p => p.status === 'playing' ? { ...p, playTime: p.playTime + 1 } : p) : state.roster,
+                        gameState: newGameState,
+                        isSubTimerRunning: newIsSubTimerRunning,
+                    };
+                }
+                case 'TOGGLE_SUB_TIMER':
+                    return { ...state, isSubTimerRunning: !state.isSubTimerRunning };
+                case 'RESET_SUB_TIMER':
+                    return { ...state, subTimer: state.subInterval, isSubTimerRunning: false };
+                case 'TRIGGER_SUBSTITUTION':
+                    return { ...state, showSubModal: true, substitution: action.payload, gameState: 'paused', isSubTimerRunning: false };
+                case 'CONFIRM_SUBSTITUTION': {
+                    const newRoster = state.roster.map(p => {
+                        if (state.substitution.off.some(sub => sub.id === p.id)) return { ...p, status: 'benched' };
+                        if (state.substitution.on.some(sub => sub.id === p.id)) return { ...p, status: 'playing' };
+                        return p;
+                    });
+                    return { ...state, roster: newRoster, showSubModal: false, gameState: 'playing', subTimer: state.subInterval, isSubTimerRunning: true };
+                }
+                case 'UPDATE_SCORE': {
+                    const { team, delta } = action.payload;
+                    const selectedTeam = state.teams.find(t => t.id === state.selectedTeamId);
+                    if (team === selectedTeam.name.toLowerCase()) {
+                        return { ...state, falconsScore: Math.max(0, state.falconsScore + delta) };
+                    }
+                    return { ...state, opponentScore: Math.max(0, state.opponentScore + delta) };
+                }
+                case 'START_SECOND_HALF':
+                    return { ...state, currentHalf: 2, gameState: 'paused', gameTimer: state.gameTime / 2, subTimer: state.subInterval, isSubTimerRunning: false };
+                case 'RESET_GAME':
+                    return {
+                        ...initialState,
+                        teams: state.teams,
+                        gameState: 'teamSelection'
+                    };
+                case 'SETUP_GAME': {
+                    const presentPlayers = state.roster.filter(p => p.status !== 'absent');
+                    if (presentPlayers.length < PLAYERS_ON_FIELD) {
+                        alert(`You need at least ${PLAYERS_ON_FIELD} players to start the game.`);
+                        return state;
+                    }
+
+                    // Initialize all present players to benched with playTime 0
+                    let newRoster = presentPlayers.map(p => ({ ...p, status: 'benched', playTime: 0 }));
+
+                    // Separate girls and boys
+                    let benchedGirls = newRoster.filter(p => p.gender === 'girl');
+                    let benchedBoys = newRoster.filter(p => p.gender === 'boy');
+
+                    // Shuffle players for random selection
+                    const shuffleArray = (array) => {
+                        for (let i = array.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [array[i], array[j]] = [array[j], array[i]];
+                        }
+                        return array;
+                    };
+
+                    benchedGirls = shuffleArray(benchedGirls);
+                    benchedBoys = shuffleArray(benchedBoys);
+
+                    let playersOnField = [];
+                    let playersOnBench = [];
+
+                    // Select girls for the field
+                    for (let i = 0; i < GIRLS_ON_FIELD && benchedGirls.length > 0; i++) {
+                        const player = benchedGirls.shift(); // Take from the shuffled array
+                        playersOnField.push({ ...player, status: 'playing' });
+                    }
+
+                    // Select boys for the field
+                    for (let i = 0; i < BOYS_ON_FIELD && benchedBoys.length > 0; i++) {
+                        const player = benchedBoys.shift(); // Take from the shuffled array
+                        playersOnField.push({ ...player, status: 'playing' });
+                    }
+
+                    // If not enough players on field, fill with remaining benched players (gender-agnostic)
+                    let remainingBenched = [...benchedGirls, ...benchedBoys];
+                    remainingBenched = shuffleArray(remainingBenched); // Shuffle remaining for fair selection
+
+                    while (playersOnField.length < PLAYERS_ON_FIELD && remainingBenched.length > 0) {
+                        const player = remainingBenched.shift();
+                        playersOnField.push({ ...player, status: 'playing' });
+                    }
+
+                    // All remaining players go to the bench
+                    playersOnBench = remainingBenched.map(p => ({ ...p, status: 'benched' }));
+
+                    // Combine all players back into a single roster, including absent players
+                    const finalRoster = [...playersOnField, ...playersOnBench, ...state.roster.filter(p => p.status === 'absent')];
+
+                    const newTeams = state.teams.map(team =>
+                        team.id === state.selectedTeamId ? { ...team, roster: finalRoster } : team
+                    );
+
+                    saveTeamsToStorage(newTeams);
+
+                    return {
+                        ...state,
+                        teams: newTeams,
+                        roster: finalRoster,
+                        gameState: 'paused',
+                        isSubTimerRunning: false,
+                        gameTimer: state.gameTime / 2,
+                        subTimer: state.subInterval,
+                        falconsScore: 0,
+                        opponentScore: 0,
+                        currentHalf: 1
+                    };
+                }
+                case 'SHOW_TOAST':
+                    return { ...state, toastMessage: action.payload };
+                case 'HIDE_TOAST':
+                    return { ...state, toastMessage: null };
+                default:
+                    return state;
+            }
+        }
+
+        function TeamSelectionScreen({ teams, dispatch }) {
+            const [newTeamName, setNewTeamName] = useState('');
+
+            const handleCreateTeam = () => {
+                if (newTeamName.trim() === '') {
+                    alert('Please enter a team name.');
+                    return;
+                }
+                dispatch({ type: 'CREATE_TEAM', payload: newTeamName });
+                setNewTeamName('');
+            };
+
+            return (
+                <div className="p-4">
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Select a Team</h2>
+                    <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+                        <h3 className="text-lg font-bold text-gray-800 mb-2">Create New Team</h3>
+                        <div className="flex space-x-2">
+                            <input
+                                type="text"
+                                value={newTeamName}
+                                onChange={(e) => setNewTeamName(e.target.value)}
+                                placeholder="Enter team name"
+                                className="w-full p-2 border rounded-md"
+                            />
+                            <button onClick={handleCreateTeam} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Create</button>
+                        </div>
+                    </div>
+                    <div className="space-y-3">
+                        {teams.map(team => (
+                            <div key={team.id} className="p-3 rounded-lg shadow-md flex items-center justify-between bg-white">
+                                <p className="font-semibold">{team.name}</p>
+                                <div className="flex space-x-2">
+                                    <button onClick={() => dispatch({ type: 'SELECT_TEAM', payload: team.id })} className="px-3 py-1 text-sm rounded-full bg-green-500 text-white">Select</button>
+                                    <button onClick={() => dispatch({ type: 'DELETE_TEAM', payload: team.id })} className="px-3 py-1 text-sm rounded-full bg-red-500 text-white">Delete</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [state, dispatch] = useReducer(gameReducer, initialState);
+            const { teams, gameState, subInterval, subTimer, gameTimer, isSubTimerRunning, showSubModal, substitution, opponentName, falconsScore, opponentScore, currentHalf, toastMessage, subGroupSize } = state;
+
+            const [showAddPlayer, setShowAddPlayer] = useState(false);
+            const [newPlayer, setNewPlayer] = useState({ name: '', gender: 'boy', number: '' });
+            const [wakeLockSentinel, setWakeLockSentinel] = useState(null);
+
+            const toggleWakeLock = async () => {
+                if (!('wakeLock' in navigator)) return;
+
+                if (wakeLockSentinel) {
+                    await wakeLockSentinel.release();
+                    setWakeLockSentinel(null);
+                } else {
+                    try {
+                        const sentinel = await navigator.wakeLock.request('screen');
+                        setWakeLockSentinel(sentinel);
+                        sentinel.addEventListener('release', () => {
+                            setWakeLockSentinel(null);
+                        });
+                    } catch (err) {
+                        console.error(`${err.name}, ${err.message}`);
+                        setWakeLockSentinel(null);
+                    }
+                }
+            };
+
+            useEffect(() => {
+                // Release wake lock if it's active when game ends or is reset
+                if (gameState !== 'playing' && gameState !== 'paused' && wakeLockSentinel) {
+                    wakeLockSentinel.release();
+                    setWakeLockSentinel(null);
+                }
+            }, [gameState, wakeLockSentinel]);
+
+            useEffect(() => {
+                if (gameState !== 'playing') return;
+                const timer = setInterval(() => dispatch({ type: 'TICK' }), 1000);
+                return () => clearInterval(timer);
+            }, [gameState]);
+
+            useEffect(() => {
+                if (toastMessage) {
+                    const timer = setTimeout(() => dispatch({ type: 'HIDE_TOAST' }), 3000);
+                    return () => clearTimeout(timer);
+                }
+            }, [toastMessage, dispatch]);
+
+            const selectedTeam = useMemo(() => teams.find(team => team.id === state.selectedTeamId), [teams, state.selectedTeamId]);
+            const roster = selectedTeam ? selectedTeam.roster : [];
+
+            const handlePlayerStatusToggle = (id) => {
+                const newRoster = roster.map(p => p.id === id ? { ...p, status: p.status === 'absent' ? 'benched' : 'absent' } : p);
+                dispatch({ type: 'UPDATE_ROSTER', payload: newRoster });
+            };
+            
+            const handlePlayerNumberChange = (id, numberStr) => {
+                const number = parseInt(numberStr, 10);
+                if (numberStr !== '' && (number < 1 || isNaN(number))) {
+                    alert("T-shirt number must be a positive number.");
+                    return;
+                }
+                const isDuplicate = roster.some(p => p.id !== id && p.number === number);
+                if (numberStr !== '' && isDuplicate) {
+                    alert(`T-shirt number ${number} is already in use.`);
+                    return;
+                }
+                const newRoster = roster.map(p => p.id === id ? { ...p, number: numberStr === '' ? '' : number } : p);
+                dispatch({ type: 'UPDATE_ROSTER', payload: newRoster });
+            };
+
+            const handleAddPlayer = () => {
+                if (!newPlayer.name) {
+                    alert("Please enter a name for the new player."); return;
+                }
+                const newPlayerObject = { id: Date.now(), ...newPlayer, number: '', status: 'benched', playTime: 0 };
+                dispatch({ type: 'ADD_PLAYER', payload: newPlayerObject });
+                setNewPlayer({ name: '', gender: 'boy', number: '' });
+                setShowAddPlayer(false);
+            };
+
+            const renderGameState = () => {
+                switch (gameState) {
+                    case 'teamSelection':
+                        return <TeamSelectionScreen teams={state.teams} dispatch={dispatch} />;
+                    case 'setup':
+                        return <SetupScreen
+                            state={state}
+                            dispatch={dispatch}
+                            opponentName={opponentName}
+                            setOpponentName={(name) => dispatch({ type: 'SET_OPPONENT_NAME', payload: name })}
+                            subInterval={subInterval}
+                            setSubInterval={(interval) => dispatch({ type: 'SET_SUB_INTERVAL', payload: interval })}
+                            subGroupSize={subGroupSize}
+                            setSubGroupSize={(size) => dispatch({ type: 'SET_SUB_GROUP_SIZE', payload: size })}
+                            handlePlayerNumberChange={handlePlayerNumberChange}
+                            handlePlayerStatusToggle={handlePlayerStatusToggle}
+                            showAddPlayer={showAddPlayer}
+                            setShowAddPlayer={setShowAddPlayer}
+                            newPlayer={newPlayer}
+                            setNewPlayer={setNewPlayer}
+                            handleAddPlayer={handleAddPlayer}
+                            handleSetupGame={() => dispatch({ type: 'SETUP_GAME' })}
+                        />;
+                    case 'playing':
+                    case 'paused':
+                        return <GameScreen state={state} dispatch={dispatch} roster={roster} wakeLockSentinel={wakeLockSentinel} toggleWakeLock={toggleWakeLock} />;
+                    case 'halftime':
+                        return <HalftimeScreen state={state} dispatch={dispatch} />;
+                    case 'finished':
+                        return <FinishedScreen state={state} dispatch={dispatch} />;
+                    default: return null;
+                }
+            };
+
+            return (
+                <div className="bg-gray-100 min-h-screen font-sans">
+                    <header className="bg-gray-800 text-white p-4 shadow-md flex justify-between items-center">
+                        <h1 className="text-xl sm:text-2xl font-bold text-center flex-grow">{selectedTeam ? `${selectedTeam.name} Rugby Manager` : 'Rugby Manager'}</h1>
+                        {gameState !== 'setup' && 
+                            <button onClick={() => { if (window.confirm('Are you sure you want to reset the game?')) dispatch({type: 'RESET_GAME'}); }} className="p-2 bg-red-600 rounded-full shadow-md text-xs transition-transform active:scale-95" aria-label="Reset Game">
+                               <RefreshCwIcon className="w-5 h-5" />
+                            </button>
+                        }
+                    </header>
+                    <main className="max-w-3xl mx-auto relative">
+                        {toastMessage && 
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm p-2 z-50">
+                                <div className="bg-yellow-500 text-white text-center font-semibold p-3 rounded-lg shadow-lg">
+                                    {toastMessage}
+                                </div>
+                            </div>
+                        }
+                        {renderGameState()}
+                    </main>
+                </div>
+            );
+        }
+
+        const PlayerCard = ({ player, isSetup, gameState, handlePlayerNumberChange, handlePlayerStatusToggle }) => (
+            <div className={`p-3 rounded-lg shadow-md flex items-center justify-between ${player.status === 'absent' ? 'bg-gray-200 text-gray-500' : 'bg-white'}`}>
+                <div className="flex items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 text-white font-bold ${player.gender === 'girl' ? 'bg-pink-500' : 'bg-blue-500'}`}>
+                        {player.name.charAt(0)}
+                    </div>
+                    <div>
+                        <p className="font-semibold">{player.name}</p>
+                        <p className="text-sm text-gray-600 capitalize">{player.gender}</p>
+                        {gameState !== 'setup' && <p className="text-xs text-indigo-600 font-medium">Play Time: {formatTime(player.playTime)}</p>}
+                    </div>
+                </div>
+                {isSetup ? (
+                    <div className="flex items-center space-x-2">
+                         <div className="flex items-center">
+                            <ShirtIcon className="text-gray-400 mr-1 h-5 w-5" />
+                            <input type="tel" defaultValue={player.number} onBlur={(e) => handlePlayerNumberChange(player.id, e.target.value)} className="w-12 text-center border rounded-md" disabled={player.status === 'absent'} aria-label={`T-shirt number for ${player.name}`} />
+                        </div>
+                        <button onClick={() => handlePlayerStatusToggle(player.id)} className={`px-3 py-1 text-sm rounded-full ${player.status === 'absent' ? 'bg-gray-400 text-white' : 'bg-green-500 text-white'}`} aria-label={`Mark ${player.name} as ${player.status === 'absent' ? 'Present' : 'Absent'}`}>{player.status === 'absent' ? 'Absent' : 'Present'}</button>
+                    </div>
+                ) : (<div className="text-lg font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded-md">#{player.number}</div>)}
+            </div>
+        );
+
+        const SetupScreen = ({ state, dispatch, opponentName, setOpponentName, subInterval, setSubInterval, subGroupSize, setSubGroupSize, handlePlayerNumberChange, handlePlayerStatusToggle, showAddPlayer, setShowAddPlayer, newPlayer, setNewPlayer, handleAddPlayer, handleSetupGame }) => {
+            const { roster } = state;
+            return (
+                <div className="p-4">
+                    <div className="flex items-center mb-4">
+                        <button onClick={() => dispatch({ type: 'SET_GAME_STATE', payload: 'teamSelection' })} className="p-2 mr-2 bg-gray-200 rounded-full shadow-md text-gray-700 hover:bg-gray-300 transition-transform active:scale-95" aria-label="Back to Team Selection">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        </button>
+                        <h2 className="text-2xl font-bold text-gray-800">Set Today's Game</h2>
+                    </div>
+                     <div className="bg-white p-4 rounded-lg shadow-md mb-4 space-y-3">
+                        <div>
+                            <label htmlFor="opponentName" className="block text-sm font-medium text-gray-700 mb-1">Opponent Team Name</label>
+                            <input type="text" id="opponentName" value={opponentName} onChange={(e) => setOpponentName(e.target.value)} className="w-full p-2 border rounded-md"/>
+                        </div>
+                        <div>
+                            <label htmlFor="subInterval" className="block text-sm font-medium text-gray-700 mb-1">Substitution Interval (minutes)</label>
+                            <input type="tel" id="subInterval" defaultValue={subInterval / 60} onBlur={(e) => { const m = parseInt(e.target.value); if(m>0){setSubInterval(m*60);}}} className="w-full p-2 border rounded-md"/>
+                        </div>
+                        <div>
+                            <label htmlFor="gameTime" className="block text-sm font-medium text-gray-700 mb-1">Total Game Time (minutes)</label>
+                            <input type="tel" id="gameTime" defaultValue={state.gameTime / 60} onBlur={(e) => { const m = parseInt(e.target.value); if(m>0){dispatch({type: 'SET_GAME_TIME', payload: m*60});}}} className="w-full p-2 border rounded-md"/>
+                        </div>
+                        <div>
+                            <label htmlFor="subGroupSize" className="block text-sm font-medium text-gray-700 mb-1">Players per Substitution</label>
+                            <input type="tel" id="subGroupSize" defaultValue={subGroupSize} onBlur={(e) => { const size = parseInt(e.target.value); if(size > 0){ setSubGroupSize(size); }}} className="w-full p-2 border rounded-md"/>
+                        </div>
+                    </div>
+                    <div className="space-y-3 mb-4">
+                        {roster.map(p => <PlayerCard key={p.id} player={p} isSetup={true} handlePlayerNumberChange={handlePlayerNumberChange} handlePlayerStatusToggle={handlePlayerStatusToggle} />)}
+                    </div>
+                    {showAddPlayer ? (
+                        <div className="bg-gray-100 p-4 rounded-lg space-y-3">
+                            <h3 className="font-semibold text-lg">Add New Player</h3>
+                             <input type="text" placeholder="Name" value={newPlayer.name} onChange={(e) => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full p-2 border rounded-md" aria-label="New player name"/>
+                            <select value={newPlayer.gender} onChange={(e) => setNewPlayer({...newPlayer, gender: e.target.value})} className="w-full p-2 border rounded-md bg-white" aria-label="New player gender">
+                                <option value="boy">Boy</option><option value="girl">Girl</option>
+                            </select>
+                            <div className="flex justify-end space-x-2">
+                                <button onClick={() => setShowAddPlayer(false)} className="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
+                                <button onClick={handleAddPlayer} className="px-4 py-2 bg-blue-500 text-white rounded-lg">Add Player</button>
+                            </div>
+                        </div>
+                    ) : (<button onClick={() => setShowAddPlayer(true)} className="w-full flex items-center justify-center p-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"><PlusCircleIcon className="w-6 h-6 mr-2" /> Add a player</button>)}
+                    <div className="mt-6">
+                        <button onClick={handleSetupGame} className="w-full p-4 bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg hover:bg-green-700 transition-transform transform hover:scale-105 active:scale-95 flex items-center justify-center"><PlayIcon className="w-8 h-8 mr-2"/> Start Game</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const Scoreboard = ({ falconsScore, opponentScore, opponentName, dispatch, teamName }) => (
+            <div className="grid grid-cols-2 gap-2 text-white mb-4">
+                <div className="bg-blue-600 p-3 rounded-lg text-center">
+                    <h3 className="font-bold text-lg truncate">{teamName}</h3>
+                    <p className="text-5xl font-mono">{falconsScore}</p>
+                    <div className="flex justify-center space-x-2 mt-2">
+                        <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: teamName.toLowerCase(), delta: 1}})} className="w-8 h-8 rounded-full bg-blue-800 text-xl transition-transform active:scale-95" aria-label={`Increase ${teamName} score`}>+</button>
+                        <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: teamName.toLowerCase(), delta: -1}})} className="w-8 h-8 rounded-full bg-blue-800 text-xl transition-transform active:scale-95" aria-label={`Decrease ${teamName} score`}>-</button>
+                    </div>
+                </div>
+                <div className="bg-red-600 p-3 rounded-lg text-center">
+                    <h3 className="font-bold text-lg truncate">{opponentName}</h3>
+                    <p className="text-5xl font-mono">{opponentScore}</p>
+                     <div className="flex justify-center space-x-2 mt-2">
+                        <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: 'opponent', delta: 1}})} className="w-8 h-8 rounded-full bg-red-800 text-xl transition-transform active:scale-95" aria-label={`Increase ${opponentName} score`}>+</button>
+                        <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: 'opponent', delta: -1}})} className="w-8 h-8 rounded-full bg-red-800 text-xl transition-transform active:scale-95" aria-label={`Decrease ${opponentName} score`}>-</button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const GameScreen = ({ state, dispatch, roster, wakeLockSentinel, toggleWakeLock }) => {
+            const { gameState, gameTimer, currentHalf, subTimer, isSubTimerRunning, showSubModal, substitution, falconsScore, opponentScore, opponentName, teams, selectedTeamId } = state;
+            const selectedTeam = teams.find(team => team.id === selectedTeamId);
+            
+            // Calculate player lists from roster
+            const onFieldPlayers = useMemo(() => roster.filter(p => p.status === 'playing'), [roster]);
+            const onBenchPlayers = useMemo(() => roster.filter(p => p.status === 'benched'), [roster]);
+            
+            // Calculate next substitution
+            const nextSubstitution = useMemo(() => {
+                const presentGirlsCount = roster.filter(p => p.gender === 'girl' && p.status !== 'absent').length;
+                const subs = { off: [], on: [] };
+
+                if (presentGirlsCount > 2) {
+                    // Strict gender mode
+                    const onFieldSorted = [...onFieldPlayers].sort((a, b) => b.playTime - a.playTime);
+                    const boysOnBench = onBenchPlayers.filter(p => p.gender === 'boy').sort((a,b) => a.playTime - b.playTime);
+                    const girlsOnBench = onBenchPlayers.filter(p => p.gender === 'girl').sort((a,b) => a.playTime - b.playTime);
+                    const subbedOnIds = new Set();
+
+                    for (const playerOff of onFieldSorted) {
+                        if (subs.on.length >= state.subGroupSize) break;
+
+                        if (playerOff.gender === 'girl') {
+                            const availableGirlsOnBench = girlsOnBench.filter(p => !subbedOnIds.has(p.id));
+                            if (availableGirlsOnBench.length > 0) {
+                                const playerOn = availableGirlsOnBench[0];
+                                subs.off.push(playerOff);
+                                subs.on.push(playerOn);
+                                subbedOnIds.add(playerOn.id);
+                            }
+                        } else { // boy
+                            const availableBoysOnBench = boysOnBench.filter(p => !subbedOnIds.has(p.id));
+                            if (availableBoysOnBench.length > 0) {
+                                const playerOn = availableBoysOnBench[0];
+                                subs.off.push(playerOff);
+                                subs.on.push(playerOn);
+                                subbedOnIds.add(playerOn.id);
+                            }
+                        }
+                    }
+                } else {
+                    // Flexible, gender-agnostic logic
+                    const fieldCopy = [...onFieldPlayers].sort((a, b) => b.playTime - a.playTime);
+                    const benchCopy = [...onBenchPlayers].sort((a, b) => a.playTime - b.playTime);
+
+                    const numSubs = Math.min(fieldCopy.length, benchCopy.length, state.subGroupSize);
+
+                    for (let i = 0; i < numSubs; i++) {
+                        subs.off.push(fieldCopy[i]);
+                        subs.on.push(benchCopy[i]);
+                    }
+                }
+                return subs;
+            }, [roster, onFieldPlayers, onBenchPlayers, state.subGroupSize]);
+
+            const mainButtonText = gameState === 'playing' ? 'PAUSE GAME' : (gameTimer === state.gameTime / 2 ? 'START GAME' : 'RESUME GAME');
+
+            return (
+                <div className="p-4">
+                    <Scoreboard falconsScore={falconsScore} opponentScore={opponentScore} opponentName={opponentName} dispatch={dispatch} teamName={selectedTeam.name} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center mb-4">
+                        <div className="bg-gray-800 text-white p-4 rounded-lg">
+                            <p className="text-sm uppercase tracking-wider">Game Time ({currentHalf === 1 ? '1st' : '2nd'} Half)</p>
+                            <p className="text-4xl font-mono">{formatTime(gameTimer)}</p>
+                        </div>
+                        <div className="bg-indigo-600 text-white p-4 rounded-lg">
+                            <p className="text-sm uppercase tracking-wider">Next Sub In</p>
+                            <p className="text-4xl font-mono">{formatTime(subTimer)}</p>
+                            <div className="flex justify-center items-center space-x-2 mt-2">
+                                 {!isSubTimerRunning && gameState === 'playing' && (<button onClick={() => dispatch({type: 'TOGGLE_SUB_TIMER'})} className="text-xs bg-white text-indigo-600 font-bold py-1 px-3 rounded-full">START</button>)}
+                                 <button onClick={() => dispatch({type: 'RESET_SUB_TIMER'})} className="text-xs bg-white text-indigo-600 font-bold py-1 px-3 rounded-full">RESET</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex justify-center space-x-4 mb-6">
+                        <button onClick={() => dispatch({type: 'SET_GAME_STATE', payload: 'setup'})} className="p-3 bg-gray-500 text-white rounded-full shadow-md flex items-center transition-transform active:scale-95">
+                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0A9 9 0 013 12z"></path></svg>
+                           <span className="ml-2 font-bold">BACK TO SETUP</span>
+                        </button>
+                        <button onClick={() => dispatch({type: 'SET_GAME_STATE', payload: gameState === 'playing' ? 'paused' : 'playing'})} className="p-3 bg-yellow-500 text-white rounded-full shadow-md flex items-center transition-transform active:scale-95">
+                           {gameState === 'playing' ? <PauseIcon className="w-6 h-6" /> : <PlayIcon className="w-6 h-6" />}
+                           <span className="ml-2 font-bold">{mainButtonText}</span>
+                        </button>
+                        {'wakeLock' in navigator && (
+                            <button onClick={toggleWakeLock} title={wakeLockSentinel ? 'Allow screen to sleep' : 'Keep screen awake'} className={`p-3 rounded-full shadow-md flex items-center transition-transform active:scale-95 ${wakeLockSentinel ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'}`}>
+                                {wakeLockSentinel ? <UnlockIcon className="w-6 h-6" /> : <LockIcon className="w-6 h-6" />}
+                            </button>
+                        )}
+                    </div>
+                    <UpcomingSubs nextSubstitution={nextSubstitution} onFieldPlayers={onFieldPlayers} onBenchPlayers={onBenchPlayers} roster={roster} subGroupSize={state.subGroupSize} />
+                    <div className="space-y-6 mt-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-green-700 mb-2">On The Field ({onFieldPlayers.length})</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{onFieldPlayers.map(p => <PlayerCard key={p.id} player={p} gameState={gameState} />)}</div>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-orange-700 mb-2">On The Bench ({onBenchPlayers.length})</h3>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{onBenchPlayers.map(p => <PlayerCard key={p.id} player={p} gameState={gameState} />)}</div>
+                        </div>
+                    </div>
+                    {showSubModal && (
+                        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-40">
+                            <div className="bg-white rounded-2xl p-6 shadow-2xl w-full max-w-sm text-center">
+                                <ArrowRightLeftIcon className="w-16 h-16 text-indigo-500 mx-auto mb-4 animate-pulse" />
+                                <h2 className="text-3xl font-bold mb-4">Substitute!</h2>
+                                <div className="space-y-4">
+                                    {substitution.on.map((pOn, i) => (<div key={pOn.id} className="text-lg">
+                                        <div className="flex items-center justify-center space-x-2"><span className="font-bold text-red-600">{substitution.off[i].name} (#{substitution.off[i].number})</span><span>(OFF)</span></div>
+                                        <div className="flex items-center justify-center space-x-2"><span className="font-bold text-green-600">{pOn.name} (#{pOn.number})</span><span>(ON)</span></div>
+                                    </div>))}
+                                </div>
+                                <button onClick={() => dispatch({type: 'CONFIRM_SUBSTITUTION'})} className="mt-8 w-full p-4 bg-indigo-600 text-white text-xl font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition-transform active:scale-95">Confirm & Resume</button>
+                            </div>
+                        </div>
+                    )}
+                    <div className="mt-8 text-center">
+                        <a href="mailto:jh.software.services@gmail.com?subject=Falcons%20Rugby%20Manager%20Feedback" className="text-sm text-gray-500 hover:text-gray-700 underline">
+                            Send Feedback
+                        </a>
+                    </div>
+                </div>
+            );
+        };
+
+        const HalftimeScreen = ({ state, dispatch }) => {
+            const { teams, selectedTeamId } = state;
+            const selectedTeam = teams.find(team => team.id === selectedTeamId);
+            return (
+                <div className="p-4 text-center">
+                    <h2 className="text-4xl font-bold text-gray-800 mt-8 mb-4">Halftime!</h2>
+                    <div className="max-w-md mx-auto"><Scoreboard {...state} dispatch={dispatch} teamName={selectedTeam.name} /></div>
+                    <p className="text-gray-600 mb-8">Swap sides and get ready for the second half.</p>
+                    <button onClick={() => dispatch({type: 'START_SECOND_HALF'})} className="w-full max-w-sm mx-auto p-4 bg-green-600 text-white text-xl font-bold rounded-lg shadow-lg hover:bg-green-700 transition-transform active:scale-95">
+                        Start 2nd Half
+                    </button>
+                </div>
+            );
+        };
+
+        const FinishedScreen = ({ state, dispatch }) => {
+            const { teams, selectedTeamId } = state;
+            const selectedTeam = teams.find(team => team.id === selectedTeamId);
+            return (
+                 <div className="p-4 text-center">
+                    <TrophyIcon className="w-24 h-24 text-yellow-500 mx-auto mt-8 mb-4" />
+                    <h2 className="text-4xl font-bold text-gray-800 mb-4">Full Time!</h2>
+                    <div className="max-w-md mx-auto"><Scoreboard {...state} dispatch={dispatch} teamName={selectedTeam.name} /></div>
+                    <p className="text-gray-600 mb-8">Great game everyone!</p>
+                    <button onClick={() => { if (window.confirm('Are you sure you want to start a new game?')) dispatch({type: 'RESET_GAME'}); }} className="w-full max-w-sm mx-auto p-4 bg-blue-600 text-white text-xl font-bold rounded-lg shadow-lg hover:bg-blue-700 transition-transform active:scale-95">
+                        Start a New Game
+                    </button>
+                </div>
+            );
+        };
+
+        const UpcomingSubs = ({ nextSubstitution, onFieldPlayers, onBenchPlayers, roster, subGroupSize }) => {
+            return (
+                <div className="bg-white p-4 rounded-lg shadow-md mb-4">
+                    <h3 className="text-lg font-bold text-gray-800 mb-2">Next Substitution Plan</h3>
+                    {nextSubstitution.on.length > 0 ? (
+                        <div className="space-y-2">
+                            {nextSubstitution.on.map((pOn, i) => (<div key={pOn.id} className="flex items-center justify-between text-sm">
+                                <div className="flex items-center"><span className="font-semibold text-green-600">{pOn.name} (#{pOn.number})</span><span className="text-gray-500 mx-1">(ON)</span></div>
+                                <ArrowRightLeftIcon className="w-4 h-4 text-gray-400" />
+                                <div className="flex items-center"><span className="font-semibold text-red-600">{nextSubstitution.off[i].name} (#{nextSubstitution.off[i].number})</span><span className="text-gray-500 ml-1">(OFF)</span></div>
+                            </div>))}
+                        </div>
+                    ) : (<p className="text-sm text-gray-500">No available substitutions on the bench.</p>)}
+                </div>
+            );
+        };
+        
+        // --- Mount the App to the DOM ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
