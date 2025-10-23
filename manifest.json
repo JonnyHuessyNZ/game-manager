@@ -1,0 +1,21 @@
+{
+  "name": "Falcons Rugby Manager",
+  "short_name": "RugbyManager",
+  "description": "Manage your rugby team's game day roster and substitutions.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f8f8f8",
+  "theme_color": "#333333",
+  "icons": [
+    {
+      "src": "icons/subbingManagerLogo192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/subbingManagerLogo512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
