@@ -2,8 +2,8 @@ const CACHE_NAME = 'rugby-manager-cache-v1';
 const urlsToCache = [
   '/game-manager/index.html',
   '/game-manager/manifest.json',
-  '/game-manager/icons/icon-192x192.png',
-  '/game-manager/icons/icon-512x512.png',
+  '/game-manager/icons/subbingManagerLogo192x192.png',
+  '/game-manager/icons/subbingManagerLogo512x512.png',
   // Add external scripts for full offline capability
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/react@18/umd/react.development.js',
