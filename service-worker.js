@@ -3,12 +3,7 @@ const urlsToCache = [
   '/game-manager/index.html',
   '/game-manager/manifest.json',
   '/game-manager/icons/subbingManagerLogo192x192.png',
-  '/game-manager/icons/subbingManagerLogo512x512.png',
-  // Add external scripts for full offline capability
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/react@18/umd/react.development.js',
-  'https://unpkg.com/react-dom@18/umd/react-dom.development.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js'
+  '/game-manager/icons/subbingManagerLogo512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
