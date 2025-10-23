@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="/game-manager/">
-    <title>Falcons Rugby Manager</title>
+    <title>Rugby Manager</title>
     <link rel="manifest" href="/manifest.json">
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -106,9 +106,8 @@
             }
         };
 
-        const PLAYERS_ON_FIELD = 6;
-        const GIRLS_ON_FIELD = 2;
-        const BOYS_ON_FIELD = PLAYERS_ON_FIELD - GIRLS_ON_FIELD;
+        const PLAYERS_ON_FIELD_DEFAULT = 6;
+        const GIRLS_ON_FIELD_DEFAULT = 2;
 
         const initialTeams = getTeamsFromStorage();
 
@@ -131,6 +130,8 @@
             opponentScore: 0,
             currentHalf: 1,
             toastMessage: null,
+            playersOnFieldCount: PLAYERS_ON_FIELD_DEFAULT,
+            girlsOnFieldCount: GIRLS_ON_FIELD_DEFAULT,
         };
 
         function gameReducer(state, action) {
@@ -176,6 +177,10 @@
                     return { ...state, gameTime: action.payload };
                 case 'SET_OPPONENT_NAME':
                     return { ...state, opponentName: action.payload };
+                case 'SET_PLAYERS_ON_FIELD_COUNT':
+                    return { ...state, playersOnFieldCount: action.payload };
+                case 'SET_GIRLS_ON_FIELD_COUNT':
+                    return { ...state, girlsOnFieldCount: action.payload };
                 case 'TICK': {
                     let newGameState = state.gameState;
                     let newIsSubTimerRunning = state.isSubTimerRunning;
@@ -228,8 +233,12 @@
                     };
                 case 'SETUP_GAME': {
                     const presentPlayers = state.roster.filter(p => p.status !== 'absent');
-                    if (presentPlayers.length < PLAYERS_ON_FIELD) {
-                        alert(`You need at least ${PLAYERS_ON_FIELD} players to start the game.`);
+                    const currentPlayersOnField = state.playersOnFieldCount;
+                    const currentGirlsOnField = state.girlsOnFieldCount;
+                    const currentBoysOnField = currentPlayersOnField - currentGirlsOnField;
+
+                    if (presentPlayers.length < currentPlayersOnField) {
+                        alert(`You need at least ${currentPlayersOnField} players to start the game.`);
                         return state;
                     }
 
@@ -256,13 +265,13 @@
                     let playersOnBench = [];
 
                     // Select girls for the field
-                    for (let i = 0; i < GIRLS_ON_FIELD && benchedGirls.length > 0; i++) {
+                    for (let i = 0; i < currentGirlsOnField && benchedGirls.length > 0; i++) {
                         const player = benchedGirls.shift(); // Take from the shuffled array
                         playersOnField.push({ ...player, status: 'playing' });
                     }
 
                     // Select boys for the field
-                    for (let i = 0; i < BOYS_ON_FIELD && benchedBoys.length > 0; i++) {
+                    for (let i = 0; i < currentBoysOnField && benchedBoys.length > 0; i++) {
                         const player = benchedBoys.shift(); // Take from the shuffled array
                         playersOnField.push({ ...player, status: 'playing' });
                     }
@@ -271,7 +280,7 @@
                     let remainingBenched = [...benchedGirls, ...benchedBoys];
                     remainingBenched = shuffleArray(remainingBenched); // Shuffle remaining for fair selection
 
-                    while (playersOnField.length < PLAYERS_ON_FIELD && remainingBenched.length > 0) {
+                    while (playersOnField.length < currentPlayersOnField && remainingBenched.length > 0) {
                         const player = remainingBenched.shift();
                         playersOnField.push({ ...player, status: 'playing' });
                     }
@@ -539,6 +548,14 @@
                         <div>
                             <label htmlFor="gameTime" className="block text-sm font-medium text-gray-700 mb-1">Total Game Time (minutes)</label>
                             <input type="tel" id="gameTime" defaultValue={state.gameTime / 60} onBlur={(e) => { const m = parseInt(e.target.value); if(m>0){dispatch({type: 'SET_GAME_TIME', payload: m*60});}}} className="w-full p-2 border rounded-md"/>
+                        </div>
+                        <div>
+                            <label htmlFor="playersOnField" className="block text-sm font-medium text-gray-700 mb-1">Total Players On Field</label>
+                            <input type="tel" id="playersOnField" defaultValue={state.playersOnFieldCount} onBlur={(e) => { const count = parseInt(e.target.value); if(count > 0 && count >= state.girlsOnFieldCount){ dispatch({type: 'SET_PLAYERS_ON_FIELD_COUNT', payload: count}); } else { alert(`Total players on field must be positive and at least ${state.girlsOnFieldCount} (girls on field).`); }}} className="w-full p-2 border rounded-md"/>
+                        </div>
+                        <div>
+                            <label htmlFor="girlsOnField" className="block text-sm font-medium text-gray-700 mb-1">Girls On Field</label>
+                            <input type="tel" id="girlsOnField" defaultValue={state.girlsOnFieldCount} onBlur={(e) => { const count = parseInt(e.target.value); if(count >= 0 && count <= state.playersOnFieldCount){ dispatch({type: 'SET_GIRLS_ON_FIELD_COUNT', payload: count}); } else { alert(`Girls on field must be non-negative and at most ${state.playersOnFieldCount} (total players on field).`); }}} className="w-full p-2 border rounded-md"/>
                         </div>
                         <div>
                             <label htmlFor="subGroupSize" className="block text-sm font-medium text-gray-700 mb-1">Players per Substitution</label>
