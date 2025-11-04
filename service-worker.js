@@ -1,9 +1,9 @@
-const CACHE_NAME = 'rugby-manager-cache-v1';
+const CACHE_NAME = 'subbing-manager-cache';
 const urlsToCache = [
-  '/game-manager/index.html',
-  '/game-manager/manifest.json',
-  '/game-manager/icons/subbingManagerLogo192x192.png',
-  '/game-manager/icons/subbingManagerLogo512x512.png'
+  '/subbing-manager/index.html',
+  '/subbing-manager/manifest.json',
+  '/subbing-manager/icons/subbingManagerLogo192x192.png',
+  '/subbing-manager/icons/subbingManagerLogo512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
