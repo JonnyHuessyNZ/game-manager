@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rugby Manager</title>
+    <title>Subbing Manager</title>
     <link rel="icon" href="/game-manager/favicon.svg" type="image/svg+xml">
     <link rel="manifest" href="/game-manager/manifest.json">
     <!-- Tailwind CSS for styling -->
@@ -126,7 +126,7 @@
             showSubModal: false,
             substitution: { off: [], on: [] },
             opponentName: 'Opponent',
-            falconsScore: 0,
+            myTeamScore: 0,
             opponentScore: 0,
             currentHalf: 1,
             toastMessage: null,
@@ -219,7 +219,7 @@
                     const { team, delta } = action.payload;
                     const selectedTeam = state.teams.find(t => t.id === state.selectedTeamId);
                     if (team === selectedTeam.name.toLowerCase()) {
-                        return { ...state, falconsScore: Math.max(0, state.falconsScore + delta) };
+                        return { ...state, myTeamScore: Math.max(0, state.myTeamScore + delta) };
                     }
                     return { ...state, opponentScore: Math.max(0, state.opponentScore + delta) };
                 }
@@ -305,7 +305,7 @@
                         isSubTimerRunning: false,
                         gameTimer: state.gameTime / 2,
                         subTimer: state.subInterval,
-                        falconsScore: 0,
+                        myTeamScore: 0,
                         opponentScore: 0,
                         currentHalf: 1
                     };
@@ -364,7 +364,7 @@
 
         function App() {
             const [state, dispatch] = useReducer(gameReducer, initialState);
-            const { teams, gameState, subInterval, subTimer, gameTimer, isSubTimerRunning, showSubModal, substitution, opponentName, falconsScore, opponentScore, currentHalf, toastMessage, subGroupSize } = state;
+            const { teams, gameState, subInterval, subTimer, gameTimer, isSubTimerRunning, showSubModal, substitution, opponentName, myTeamScore, opponentScore, currentHalf, toastMessage, subGroupSize } = state;
 
             const [showAddPlayer, setShowAddPlayer] = useState(false);
             const [newPlayer, setNewPlayer] = useState({ name: '', gender: 'boy', number: '' });
@@ -481,7 +481,7 @@
             return (
                 <div className="bg-gray-100 min-h-screen font-sans">
                     <header className="bg-gray-800 text-white p-4 shadow-md flex justify-between items-center">
-                        <h1 className="text-xl sm:text-2xl font-bold text-center flex-grow">{selectedTeam ? `${selectedTeam.name} Rugby Manager` : 'Rugby Manager'}</h1>
+                        <h1 className="text-xl sm:text-2xl font-bold text-center flex-grow">{selectedTeam ? `${selectedTeam.name} Subbing Manager` : 'Subbing Manager'}</h1>
                         {gameState !== 'setup' && 
                             <button onClick={() => { if (window.confirm('Are you sure you want to reset the game?')) dispatch({type: 'RESET_GAME'}); }} className="p-2 bg-red-600 rounded-full shadow-md text-xs transition-transform active:scale-95" aria-label="Reset Game">
                                <RefreshCwIcon className="w-5 h-5" />
@@ -585,11 +585,11 @@
             );
         };
 
-        const Scoreboard = ({ falconsScore, opponentScore, opponentName, dispatch, teamName }) => (
+        const Scoreboard = ({ myTeamScore, opponentScore, opponentName, dispatch, teamName }) => (
             <div className="grid grid-cols-2 gap-2 text-white mb-4">
                 <div className="bg-blue-600 p-3 rounded-lg text-center">
                     <h3 className="font-bold text-lg truncate">{teamName}</h3>
-                    <p className="text-5xl font-mono">{falconsScore}</p>
+                    <p className="text-5xl font-mono">{myTeamScore}</p>
                     <div className="flex justify-center space-x-2 mt-2">
                         <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: teamName.toLowerCase(), delta: 1}})} className="w-8 h-8 rounded-full bg-blue-800 text-xl transition-transform active:scale-95" aria-label={`Increase ${teamName} score`}>+</button>
                         <button onClick={() => dispatch({type: 'UPDATE_SCORE', payload: {team: teamName.toLowerCase(), delta: -1}})} className="w-8 h-8 rounded-full bg-blue-800 text-xl transition-transform active:scale-95" aria-label={`Decrease ${teamName} score`}>-</button>
@@ -607,7 +607,7 @@
         );
 
         const GameScreen = ({ state, dispatch, roster, wakeLockSentinel, toggleWakeLock }) => {
-            const { gameState, gameTimer, currentHalf, subTimer, isSubTimerRunning, showSubModal, substitution, falconsScore, opponentScore, opponentName, teams, selectedTeamId } = state;
+            const { gameState, gameTimer, currentHalf, subTimer, isSubTimerRunning, showSubModal, substitution, myTeamScore, opponentScore, opponentName, teams, selectedTeamId } = state;
             const selectedTeam = teams.find(team => team.id === selectedTeamId);
             
             // Calculate player lists from roster
@@ -666,7 +666,7 @@
 
             return (
                 <div className="p-4">
-                    <Scoreboard falconsScore={falconsScore} opponentScore={opponentScore} opponentName={opponentName} dispatch={dispatch} teamName={selectedTeam.name} />
+                    <Scoreboard myTeamScore={myTeamScore} opponentScore={opponentScore} opponentName={opponentName} dispatch={dispatch} teamName={selectedTeam.name} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-center mb-4">
                         <div className="bg-gray-800 text-white p-4 rounded-lg">
                             <p className="text-sm uppercase tracking-wider">Game Time ({currentHalf === 1 ? '1st' : '2nd'} Half)</p>
@@ -723,7 +723,7 @@
                         </div>
                     )}
                     <div className="mt-8 text-center">
-                        <a href="mailto:jh.software.services@gmail.com?subject=Falcons%20Rugby%20Manager%20Feedback" className="text-sm text-gray-500 hover:text-gray-700 underline">
+                        <a href="mailto:jh.software.services@gmail.com?subject=MyTeam%20Subbing%20Manager%20Feedback" className="text-sm text-gray-500 hover:text-gray-700 underline">
                             Send Feedback
                         </a>
                     </div>
