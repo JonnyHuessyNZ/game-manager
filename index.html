@@ -90,7 +90,7 @@
         // --- localStorage Helpers ---
         const getTeamsFromStorage = () => {
             try {
-                const teams = localStorage.getItem('rugby-teams');
+                const teams = localStorage.getItem('subbing-teams');
                 return teams ? JSON.parse(teams) : [];
             } catch (e) {
                 console.error("Could not get teams from storage:", e);
@@ -100,7 +100,7 @@
 
         const saveTeamsToStorage = (teams) => {
             try {
-                localStorage.setItem('rugby-teams', JSON.stringify(teams));
+                localStorage.setItem('subbing-teams', JSON.stringify(teams));
             } catch (e) {
                 console.error("Could not save teams to storage:", e);
             }
